@@ -24,15 +24,10 @@ from django.db import models
 # 지역 코드는 3차 rag_service._extract_region() 의 REGION_MAP 값과
 # 반드시 일치해야 합니다. 여기서 코드를 바꾸면 지역 필터가 조용히
 # 아무것도 못 찾습니다.
-REGION_CHOICES = [
-    ("common", "전국 공통"),
-    ("seoul", "서울"),
-    ("cheonan", "천안"),
-    ("busan_namgu", "부산 남구"),
-    ("incheon_michuhol", "인천 미추홀구"),
-    ("sejong", "세종"),
-    ("jeju", "제주"),
-]
+# 지역 정의는 members/regions.py 한 곳에만 있습니다.
+# 지역을 추가하려면 그 파일의 REGIONS 를 고치십시오.
+# 여기서 재수출하는 이유는 기존 import 경로를 깨지 않기 위해서입니다.
+from .regions import REGION_CHOICES  # noqa: F401
 
 
 class Member(AbstractUser):

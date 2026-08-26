@@ -491,26 +491,17 @@ def _load_from_db(only_manual: bool = False) -> list[dict]:
 def _extract_region(filename: str) -> str:
     """파일명에서 지역 코드를 추출한다. (RAG_SOURCE=files 전용)
 
-    ⚠️ 3차부터 알려진 불일치: seed 쪽은 전국 공통을 None 으로, 이 함수는
-    "common" 문자열로 표기한다. search() 의 지역 필터가 두 값을 모두
-    공통으로 취급하므로 동작에는 문제가 없지만, 표기 통일은 추후 과제다.
+    지역 매핑은 members/regions.py 한 곳에만 있습니다. 통합 전에는 이 함수가
+    자체 표를 들고 있었고, 거기에만 있던 "부산" 별칭 때문에 부산의 다른 구를
+    추가하면 남구 문서로 오태깅되는 문제가 있었습니다.
+
+    seed 쪽은 전국 공통을 None 으로, 이 함수는 "common" 문자열로 표기한다.
+    search() 의 지역 필터가 두 값을 모두 공통으로 취급하므로 동작에는
+    문제가 없다.
     """
-    REGION_MAP = {
-        "서울": "seoul",
-        "천안": "cheonan",
-        "부산남구": "busan_namgu",
-        "부산": "busan_namgu",
-        "세종": "sejong",
-        "인천미추홀구": "incheon_michuhol",
-        "미추홀": "incheon_michuhol",
-        "제주": "jeju",
-        "공통": "common",
-        "환경부": "common",
-    }
-    for keyword, code in REGION_MAP.items():
-        if keyword in filename:
-            return code
-    return "common"
+    from members.regions import COMMON_CODE, resolve_region
+
+    return resolve_region(filename) or COMMON_CODE
 
 
 def _load_from_files() -> list[dict]:

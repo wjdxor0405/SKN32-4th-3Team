@@ -29,19 +29,9 @@ from rag.models import Document, SourceType
 IGNORED_STEMS = {"readme", "read_me", "notes", "메모"}
 SUPPORTED = (".txt", ".md", ".pdf")
 
-# 제목의 "[지역명]" → region 코드 (3차 seed_docs.REGION_MAP 그대로).
-# 여기 없는 지역이나 법령은 None(=전국 공통)으로 남는다.
-REGION_MAP = {
-    "서울": "seoul",
-    "천안": "cheonan",
-    "부산 남구": "busan_namgu",
-    "부산남구": "busan_namgu",
-    "세종": "sejong",
-    "인천 미추홀구": "incheon_michuhol",
-    "인천미추홀구": "incheon_michuhol",
-    "미추홀": "incheon_michuhol",
-    "제주": "jeju",
-}
+# 지역 매핑은 members/regions.py 한 곳에만 있습니다.
+# (통합 전에는 이 파일과 rag/service.py 가 서로 다른 표를 들고 있었습니다.)
+from members.regions import resolve_region
 
 
 def _extract_title(text: str, fallback: str) -> str:
@@ -55,10 +45,8 @@ def _extract_title(text: str, fallback: str) -> str:
 
 
 def _extract_region(title: str) -> str | None:
-    for keyword, code in REGION_MAP.items():
-        if keyword in title:
-            return code
-    return None
+    """문서 제목에서 지역 코드를 뽑는다. 못 찾으면 None(=전국 공통)."""
+    return resolve_region(title)
 
 
 class Command(BaseCommand):
