@@ -61,30 +61,12 @@
             지원 지역
           </h3>
           <div class="land-regions">
-            <div class="land-region" onclick="location.href='{% url 'guide' 'region-seoul' %}'">
-              <span><span class="land-rdot" style="background:#2D8B4E"></span>서울특별시</span>
+            {% for r in regions %}
+            <div class="land-region" onclick="location.href='{% url 'guide' r.slug_url %}'">
+              <span><span class="land-rdot" style="background:{{ r.color }}"></span>{{ r.display }}</span>
               <span class="land-region-go">바로가기 →</span>
             </div>
-            <div class="land-region" onclick="location.href='{% url 'guide' 'region-cheonan' %}'">
-              <span><span class="land-rdot" style="background:#3B7DD8"></span>천안시</span>
-              <span class="land-region-go">바로가기 →</span>
-            </div>
-            <div class="land-region" onclick="location.href='{% url 'guide' 'region-busan' %}'">
-              <span><span class="land-rdot" style="background:#D4890B"></span>부산 남구</span>
-              <span class="land-region-go">바로가기 →</span>
-            </div>
-            <div class="land-region" onclick="location.href='{% url 'guide' 'region-incheon' %}'">
-              <span><span class="land-rdot" style="background:#7B2D8B"></span>인천 미추홀구</span>
-              <span class="land-region-go">바로가기 →</span>
-            </div>
-            <div class="land-region" onclick="location.href='{% url 'guide' 'region-sejong' %}'">
-              <span><span class="land-rdot" style="background:#D44B0B"></span>세종시</span>
-              <span class="land-region-go">바로가기 →</span>
-            </div>
-            <div class="land-region" onclick="location.href='{% url 'guide' 'region-jeju' %}'">
-              <span><span class="land-rdot" style="background:#0B8BD4"></span>제주도</span>
-              <span class="land-region-go">바로가기 →</span>
-            </div>
+            {% endfor %}
           </div>
         </div>
         <div class="land-card" id="land-info">

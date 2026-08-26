@@ -32,7 +32,15 @@ class HomeView(View):
     """
 
     def get(self, request):
-        return render(request, "home.html")
+        from .guides import GUIDE_DATA
+        from .regions import region_cards
+
+        # 가이드 콘텐츠가 아직 없는 지역은 카드를 내보내지 않는다.
+        # REGIONS 에 지역을 추가한 뒤 guides.py 콘텐츠를 만들기 전까지는
+        # 랜딩에서 감춰 두는 것이다. 이렇게 하지 않으면 카드를 눌렀을 때
+        # GuideView 가 Http404 를 낸다.
+        cards = [c for c in region_cards() if c["slug_url"] in GUIDE_DATA]
+        return render(request, "home.html", {"regions": cards})
 
 
 class GuideView(View):

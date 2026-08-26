@@ -24,18 +24,19 @@ import re
 import sys
 from pathlib import Path
 
-# seed_docs.REGION_MAP 과 반드시 같아야 한다.
-REGION_MAP = {
-    "서울": "seoul",
-    "천안": "cheonan",
-    "부산 남구": "busan_namgu",
-    "부산남구": "busan_namgu",
-    "세종": "sejong",
-    "인천 미추홀구": "incheon_michuhol",
-    "인천미추홀구": "incheon_michuhol",
-    "미추홀": "incheon_michuhol",
-    "제주": "jeju",
-}
+# 지역 매핑은 members/regions.py 한 곳에서만 가져온다.
+# (이 스크립트가 자체 사본을 들고 있으면, 지역을 추가할 때마다
+#  여기까지 고쳐야 하고 잊으면 멀쩡한 파일이 FAIL 로 잡힌다.)
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.insert(0, str(_HERE))
+
+try:
+    from members.regions import COMMON_CODE, resolve_region
+except ImportError:  # pragma: no cover
+    print("members/regions.py 를 찾을 수 없습니다. 프로젝트 루트에서 실행하십시오.")
+    raise SystemExit(2)
+
 
 SECTION = re.compile(r"^\s*=+\s*(.+?)\s*=+\s*$", re.M)
 ITEM = re.compile(r"^\s*\[(.+)\]\s*$", re.M)
@@ -43,10 +44,7 @@ PLACEHOLDER = re.compile(r"〔확인|여기부터 복사|※ 초안")
 
 
 def region_of(text: str) -> str | None:
-    for keyword, code in REGION_MAP.items():
-        if keyword in text:
-            return code
-    return None
+    return resolve_region(text)
 
 
 def first_line(text: str) -> str:
@@ -83,8 +81,8 @@ def check(path: Path) -> tuple[list[str], list[str]]:
 
     # 4·5. 지역 코드 3중 일치
     declared = region_line.split(":", 1)[1].strip() if region_line else None
-    from_title = region_of(title) or "common"
-    from_stem = region_of(path.stem) or "common"
+    from_title = region_of(title) or COMMON_CODE
+    from_stem = region_of(path.stem) or COMMON_CODE
 
     if declared and declared != from_title:
         errors.append(

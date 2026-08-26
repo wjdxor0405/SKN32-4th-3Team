@@ -19,7 +19,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from members.regions import COMMON_CODE, resolve_region  # noqa: E402
+from members.regions import (  # noqa: E402
+    COMMON_CODE,
+    REGIONS,
+    check_alias_collisions,
+    resolve_region,
+)
 
 # ── 통합 전 매핑 (원본 그대로 박제) ──────────────────────────
 LEGACY_TITLE_MAP = {  # seed_docs.REGION_MAP
@@ -74,7 +79,8 @@ def main() -> int:
     print(f"  {'파일':38s} {'제목기준':>18s} {'파일명기준':>18s}")
     print("  " + "-" * 76)
 
-    failures = 0
+    LEGACY_CODES = set(LEGACY_TITLE_MAP.values()) | set(LEGACY_FILE_MAP.values())
+    failures = news = 0
     for path in files:
         title = first_line(path)
         stem = path.stem
@@ -89,6 +95,19 @@ def main() -> int:
         after_f = resolve_region(stem) or COMMON_CODE
         ok_f = before_f == after_f
 
+        # 통합 이후 새로 정의한 지역은 "바뀐 것"이 아니라 "새로 생긴 것"이다.
+        # 옛 표에 없던 코드로 붙었고, 옛 결과가 미분류(None/common)였다면 정상.
+        is_new = (
+            after_t not in LEGACY_CODES
+            and after_t is not None
+            and before_t in (None, COMMON_CODE)
+            and before_f in (None, COMMON_CODE)
+        )
+        if is_new:
+            news += 1
+            print(f"  {path.name[:38]:38s} {'신규 ' + str(after_t):>18s} {'신규 ' + str(after_f):>18s}")
+            continue
+
         if not (ok_t and ok_f):
             failures += 1
         mark_t = "OK" if ok_t else f"✗ {before_t}→{after_t}"
@@ -99,7 +118,11 @@ def main() -> int:
     if failures:
         print(f"  ✗ 태깅이 바뀐 파일 {failures}개 — 통합을 적용하면 안 됩니다.")
     else:
-        print(f"  ✓ {len(files)}개 전부 통합 전과 동일합니다.")
+        kept = len(files) - news
+        msg = f"  ✓ 기존 {kept}개 전부 통합 전과 동일합니다."
+        if news:
+            msg += f" (신규 지역 {news}개는 정상적으로 새 코드가 붙었습니다.)"
+        print(msg)
 
     # ── 통합의 목적: 하위 지역 오태깅이 사라졌는가 ──────────
     print("\n■ 확장성 검증 — 같은 광역에 다른 기초단체를 추가하면\n")
@@ -134,6 +157,15 @@ def main() -> int:
     print(f"  남아 있기 때문입니다. 서울을 자치구 단위로 쪼갤 때는")
     print(f"  regions.py 의 seoul aliases 에서 \"서울\" 을 빼고")
     print(f"  \"서울특별시\" 같은 더 긴 표기만 남겨야 합니다.")
+
+    # ── 별칭 충돌 검사 (지역을 여러 개 한꺼번에 추가할 때) ──
+    print(f"\n■ 별칭 충돌 검사 — 정의된 지역 {len(REGIONS)}개\n")
+    collisions = check_alias_collisions()
+    if collisions:
+        for c in collisions:
+            print(f"  ! {c}")
+    else:
+        print("  ✓ 서로 겹치는 별칭이 없습니다.")
 
     return 1 if failures else 0
 
